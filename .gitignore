@@ -1,0 +1,9 @@
+target/
+
+.vscode/
+.idea/
+
+*.db
+*.pidx
+*.sidx
+backup/
