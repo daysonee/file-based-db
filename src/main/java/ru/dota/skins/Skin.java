@@ -20,9 +20,9 @@ public class Skin {
         if (name == null || name.isBlank() || name.length() > NAME_LEN)
             throw new IllegalArgumentException("Название: от 1 до " + NAME_LEN + " символов");
         if (hero == null || hero.isBlank() || hero.length() > HERO_LEN)
-            throw new IllegalArgumentException("Название: от 1 до " + HERO_LEN + " символов");
+            throw new IllegalArgumentException("Герой: от 1 до " + HERO_LEN + " символов");
         if (rarity == null || rarity.isBlank() || rarity.length() > RARITY_LEN)
-            throw new IllegalArgumentException("Название: от 1 до " + NAME_LEN + " символов");
+            throw new IllegalArgumentException("Редкость: от 1 до " + NAME_LEN + " символов");
         if (id <= 0)
             throw new IllegalArgumentException("Id предмета не может быть меньше 1");
         if (price < 0){
@@ -85,9 +85,9 @@ public class Skin {
 
     public static void writeTo(RandomAccessFile f, Skin s) throws IOException {
         f.writeInt(s.getId());
-        writeFixedString(f, s.getName(), s.NAME_LEN);
-        writeFixedString(f, s.getHero(), s.HERO_LEN);
-        writeFixedString(f, s.getRarity(), s.RARITY_LEN);
+        writeFixedString(f, s.getName(), Skin.NAME_LEN);
+        writeFixedString(f, s.getHero(), Skin.HERO_LEN);
+        writeFixedString(f, s.getRarity(), Skin.RARITY_LEN);
         f.writeDouble(s.getPrice());
         f.writeBoolean(s.isTradable());
     }

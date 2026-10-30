@@ -7,3 +7,6 @@ target/
 *.pidx
 *.sidx
 backup/
+*.tmp
+*.xlsx
+*.zip

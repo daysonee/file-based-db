@@ -5,7 +5,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public class Database implements AutoCloseable {
     private final String basePath;
@@ -165,9 +175,6 @@ public class Database implements AutoCloseable {
 
     }
 
-    // ---------- редактирование ----------
-
-    // заменить скин с id = oldId на newSkin (id тоже можно менять)
     public void update(int oldId, Skin newSkin) throws IOException {
         int slot = pidx.find(oldId);
         if (slot == -1) {
@@ -212,6 +219,55 @@ public class Database implements AutoCloseable {
         }
         if (n != -1) {
             data.setPrev(n, p);
+        }
+    }
+
+    public int size() {
+        return data.getRecordCount();
+    }
+
+    public void backup(String zipPath) throws IOException {
+        save();
+        try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(zipPath))) {
+            addToZip(zip, dbPath(basePath), "skins.db");
+            addToZip(zip, pidxPath(basePath), "skins.pidx");
+            addToZip(zip, sidxPath(basePath), "skins.sidx");
+        }
+    }
+
+    private static void addToZip(ZipOutputStream zip, String file, String entryName) throws IOException {
+        zip.putNextEntry(new ZipEntry(entryName));
+        Files.copy(Path.of(file), zip);
+        zip.closeEntry();
+    }
+
+    public static Database restore(String zipPath, String basePath) throws IOException {
+        int found = 0;
+        try (ZipInputStream zip = new ZipInputStream(new FileInputStream(zipPath))) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                String target = switch (entry.getName()) {
+                    case "skins.db" -> dbPath(basePath);
+                    case "skins.pidx" -> pidxPath(basePath);
+                    case "skins.sidx" -> sidxPath(basePath);
+                    default -> throw new IOException("Неизвестный файл в архиве: " + entry.getName());
+                };
+                Files.copy(zip, Path.of(target), StandardCopyOption.REPLACE_EXISTING);
+                found++;
+            }
+        }
+        if (found != 3) {
+            throw new IOException("Архив повреждён или это не backup базы");
+        }
+        return open(basePath);
+    }
+
+    public void forEach(Consumer<Skin> action) throws IOException {
+        for (int slot = 0; slot < data.getSlotCount(); ++slot) {
+            Skin s = data.read(slot);
+            if (s != null) {
+                action.accept(s);
+            }
         }
     }
 }

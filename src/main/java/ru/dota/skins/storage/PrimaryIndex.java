@@ -165,7 +165,6 @@ public class PrimaryIndex implements AutoCloseable {
         PrimaryIndex bigger = create(path + ".tmp", capacity * 2);
         for (int i = 0; i < capacity; ++i) {
             file.seek(offset(i));
-            file.seek(offset(i));
             byte state = file.readByte();
             int key = file.readInt();
             int dataSlot = file.readInt();
