@@ -7,7 +7,7 @@ import java.io.RandomAccessFile;
 public class DataFile implements AutoCloseable {
     public static final int MAGIC = 0x534B494E;
     public static final int HEADER_SIZE = 16;
-    public static final int RECORD_SIZE = 1 + Skin.RECORD_SIZE;
+    public static final int RECORD_SIZE = 1 + Skin.RECORD_SIZE + 4 + 4;
 
     private static final byte FREE = 0;
     private static final byte USED = 1;
@@ -32,10 +32,15 @@ public class DataFile implements AutoCloseable {
         return df;
     }
 
+    public void flush() throws IOException {
+        file.getChannel().force(true); 
+    }
+
     public static DataFile open(String path) throws IOException {
         RandomAccessFile f = new RandomAccessFile(path, "rw");
         f.seek(0);
         if (f.length() < HEADER_SIZE || f.readInt() != MAGIC) {
+            f.close();
             throw new IOException("Не файл БД");
         }
         DataFile df = new DataFile(f);
@@ -57,6 +62,34 @@ public class DataFile implements AutoCloseable {
         return HEADER_SIZE + (long) slot * RECORD_SIZE;
     }
 
+    private long prevOffset(int slot) {
+        return (offset(slot) + 1 + Skin.RECORD_SIZE);
+    }
+
+    private long nextOffset(int slot) {
+        return prevOffset(slot) + 4;
+    }
+
+    public int getPrev(int slot) throws IOException {
+        file.seek(prevOffset(slot));
+        return file.readInt();
+    }
+
+    public int getNext(int slot) throws IOException {
+        file.seek(nextOffset(slot));
+        return file.readInt();
+    }
+
+    public void setPrev(int slot, int value) throws IOException {
+        file.seek(prevOffset(slot));
+        file.writeInt(value);
+    }
+
+    public void setNext(int slot, int value) throws IOException {
+        file.seek(nextOffset(slot));
+        file.writeInt(value);
+    }
+
     public int insert(Skin s) throws IOException {
         int slot;
         if (freeHead != -1) {
@@ -70,12 +103,17 @@ public class DataFile implements AutoCloseable {
         file.seek(offset(slot));
         file.writeByte(USED);
         Skin.writeTo(file, s);
+        file.writeInt(-1);
+        file.writeInt(-1);
         recordCount++;
         writeHeader();
         return slot;
     }
 
     public Skin read(int slot) throws IOException {
+        if (slot < 0 || slot >= slotCount) {
+            throw new IllegalArgumentException("Нет ячейки " + slot);
+        }
         file.seek(offset(slot));
         if (file.readByte() == FREE) {
             return null;
@@ -101,7 +139,7 @@ public class DataFile implements AutoCloseable {
 
     public void delete(int slot) throws IOException {
         checkUsed(slot);
-        file.seek(slot);
+        file.seek(offset(slot));
         file.writeByte(FREE);
         file.writeInt(freeHead);
         freeHead = slot;

@@ -24,6 +24,10 @@ public class PrimaryIndex implements AutoCloseable {
         this.file = file;
     }
 
+    public void flush() throws IOException {
+        file.getChannel().force(true); // принудительно сбросить данные на диск
+    }
+
     public static PrimaryIndex create(String path) throws IOException {
         return create(path, INITIAL_CAPACITY);
     }

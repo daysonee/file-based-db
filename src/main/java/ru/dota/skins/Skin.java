@@ -65,14 +65,14 @@ public class Skin {
         return this.tradable;
     }
 
-    static void writeFixedString(RandomAccessFile f, String s, int len) throws IOException {
+    public static void writeFixedString(RandomAccessFile f, String s, int len) throws IOException {
         for (int i = 0; i < len; ++i) {
             char c = (i < s.length() ? s.charAt(i) : '\0');
             f.writeChar(c);
         }
     }
 
-    static String readFixedString(RandomAccessFile f, int len) throws IOException {
+    public static String readFixedString(RandomAccessFile f, int len) throws IOException {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < len; ++i) {
             char c = f.readChar();
