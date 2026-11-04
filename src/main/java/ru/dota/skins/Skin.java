@@ -22,7 +22,7 @@ public class Skin {
         if (hero == null || hero.isBlank() || hero.length() > HERO_LEN)
             throw new IllegalArgumentException("Герой: от 1 до " + HERO_LEN + " символов");
         if (rarity == null || rarity.isBlank() || rarity.length() > RARITY_LEN)
-            throw new IllegalArgumentException("Редкость: от 1 до " + NAME_LEN + " символов");
+            throw new IllegalArgumentException("Редкость: от 1 до " + RARITY_LEN + " символов");
         if (id <= 0)
             throw new IllegalArgumentException("Id предмета не может быть меньше 1");
         if (price < 0){
